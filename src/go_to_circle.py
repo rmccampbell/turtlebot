@@ -9,7 +9,12 @@ import random
 SPEED = 0.25
 STEERING = 1.0
 
-GOALS = [(0, 0), (1.5, 0)]
+GOALS = []
+
+R = .7
+for i in range(20):
+    theta = i*2*math.pi/20
+    GOALS.append((R*math.cos(theta), R*math.sin(theta)))
 
 RATE = 10.0
 
@@ -18,14 +23,6 @@ odom_speed = 0.0
 start_pos = None
 goal_ind = 0
 
-
-Kp = 0.5
-Ki = 0.4
-Kd = -0.01
-dt = 1.0/RATE
-prev_error = 0.0
-i_error = 0.0
-
 def odom_callback(data):
     global odom_speed, odom_pos, odom_angle, start_pos
     odom_speed = data.twist.twist.linear.x
@@ -33,21 +30,6 @@ def odom_callback(data):
     odom_angle = 2*math.asin(data.pose.pose.orientation.z)
     if start_pos is None:
         start_pos = odom_pos
-
-def pid_speed(target_speed):
-    global prev_error, i_error
-    error = target_speed - odom_speed
-    d_error = (error - prev_error) / dt
-    i_error = i_error + error * dt
-    # rospy.loginfo("Odom Speed: %s", odom_speed)
-    # rospy.loginfo("error: %s", error)
-    # rospy.loginfo("d_error: %s", d_error)
-    # rospy.loginfo("i_error: %s", i_error)
-    out_speed = Kp*error + Ki*i_error + Kd*d_error
-    prev_error = error
-    # rospy.loginfo("out_speed: %s", out_speed)
-    return out_speed
-
 
 def main():
     global vel, prev_error, i_error, goal_ind
@@ -71,9 +53,9 @@ def main():
         theta_e = math.atan2(math.sin(theta_e), math.cos(theta_e))
         
         vel.angular.z = STEERING * theta_e
-        vel.linear.x = pid_speed(SPEED)
+        vel.linear.x = SPEED
 
-        if abs(dx) < .05 and abs(dy) < .05:
+        if abs(dx) < .15 and abs(dy) < .15:
             goal_ind = (goal_ind + 1) % len(GOALS)
 
         vel_pub.publish(vel)
