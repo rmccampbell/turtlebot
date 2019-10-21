@@ -5,8 +5,10 @@ from sensor_msgs.msg import Imu
 from kobuki_msgs.msg import SensorState
 import random
 
-SPEED = .25
-TURNINGSPEED = .1
+RATE = 20
+
+SPEED = .2
+TURNINGSPEED = -.1
 ROTSPEED = .5
 
 vel = Twist()
@@ -15,9 +17,9 @@ RIGHT = 0
 CENTER = STRAIGHT = 1
 LEFT = 2
 
-RIGHT_THRESHOLD = 1450
+RIGHT_THRESHOLD = 1460
 CENTER_THRESHOLD = 1700
-LEFT_THRESHOLD = 1550
+LEFT_THRESHOLD = 1560
 
 direct = STRAIGHT
 
@@ -50,7 +52,7 @@ def main():
     vel_pub = rospy.Publisher('/cmd_vel_mux/input/navi', Twist, queue_size=1)
 #    rospy.Subscriber("/mobile_base/sensors/imu_data", Imu, imu_callback)
     rospy.Subscriber("/mobile_base/sensors/core", SensorState, sensor_callback)
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(RATE)
     direct = STRAIGHT
     vel.linear.x = SPEED
     vel.angular.z = 0
