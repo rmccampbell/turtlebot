@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 import rospy
 from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 from kobuki_msgs.msg import SensorState
 import random
 
 RATE = 20
 
-SPEED = .2
-TURNINGSPEED = .1
-ROTSPEED = .75
+SPEED = .3
+TURNINGSPEED = -.15
+ROTSPEED = .5
 
 vel = Twist()
 
@@ -21,6 +22,31 @@ CENTER_THRESHOLD = 1700
 LEFT_THRESHOLD = 1560
 
 direct = STRAIGHT
+
+Kp = 0.75
+Ki = 0.5
+Kd = -0.01
+dt = 1.0/RATE
+
+odom_speed = 0.0
+prev_error = 0.0
+i_error = 0.0
+
+
+def odom_callback(data):
+    global odom_speed
+    odom_speed = data.twist.twist.linear.x
+
+
+def pid_speed(target_speed):
+    global prev_error, i_error
+    error = target_speed - odom_speed
+    d_error = (error - prev_error) / dt
+    i_error = i_error + error * dt
+    out_speed = Kp*error + Ki*i_error + Kd*d_error
+    prev_error = error
+    return out_speed
+
 
 def sensor_callback(data):
     global direct
@@ -46,6 +72,7 @@ def main():
     global direct
     rospy.init_node('joy_teleop', anonymous=True)
     vel_pub = rospy.Publisher('/cmd_vel_mux/input/navi', Twist, queue_size=1)
+    rospy.Subscriber("/odom", Odometry, odom_callback)
     rospy.Subscriber("/mobile_base/sensors/core", SensorState, sensor_callback)
     rate = rospy.Rate(RATE)
     direct = STRAIGHT
@@ -54,13 +81,13 @@ def main():
     while not rospy.is_shutdown():
         if direct == STRAIGHT:
             vel.angular.z = 0
-            vel.linear.x = SPEED
+            vel.linear.x = pid_speed(SPEED)
         elif direct == LEFT:
             vel.angular.z = ROTSPEED
-            vel.linear.x = TURNINGSPEED
+            vel.linear.x = pid_speed(TURNINGSPEED)
         elif direct == RIGHT:
             vel.angular.z = -ROTSPEED
-            vel.linear.x = TURNINGSPEED
+            vel.linear.x = pid_speed(TURNINGSPEED)
         vel_pub.publish(vel)
         rate.sleep()
 
