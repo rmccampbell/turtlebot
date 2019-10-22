@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import rospy
 from geometry_msgs.msg import Twist
 from kobuki_msgs.msg import SensorState
