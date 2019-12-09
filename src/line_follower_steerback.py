@@ -9,7 +9,7 @@ import random
 RATE = 20.0
 DT = 1.0/RATE
 
-SCALE = 1.2
+SCALE = 1.8
 
 SPEED = .2 * SCALE
 TURNINGSPEED = .1 * SCALE
